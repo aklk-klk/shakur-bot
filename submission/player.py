@@ -58,6 +58,16 @@ class PlayerAgent(Agent):
             ranks = [get_rank(c) for c in cards]
             counts = [ranks.count(r) for r in set(ranks)]
             return 3 in counts and counts.count(2) + counts.count(3) >= 2
+        def has_straight(cards):
+            ranks = set(get_rank(c) for c in cards)
+            if 8 in ranks:  # Ace is present
+                ranks.add(-1)  # A-2-3-4-5 becomes -1, 0, 1, 2, 3
+            sorted_ranks = sorted(ranks)
+            for i in range(len(sorted_ranks) - 4):
+                window = sorted_ranks[i:i+5]
+                if window[4] - window[0] == 4:
+                    return True
+            return False
         def has_straight_flush(cards):
             diamond_ranks = []
             heart_ranks = []
@@ -80,7 +90,7 @@ class PlayerAgent(Agent):
 
                 unique_ranks = set(suited_ranks)
                 if 8 in unique_ranks:
-                    unique_ranks.add(1)  # Treat Ace as low for A-2-3-4-5
+                    unique_ranks.add(-1)  # Treat Ace as low for A-2-3-4-5
                 sorted_ranks = sorted(unique_ranks)
                 
                 for i in range(len(sorted_ranks) - 4):
