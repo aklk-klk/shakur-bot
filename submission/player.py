@@ -125,3 +125,28 @@ class PlayerAgent(Agent):
         else:
             # log observation keys
             self.logger.info(f"Observation keys: {observation}")
+
+    def preFlopAction(self, observation):
+         my_hand = observation["my_cards"]
+         num1 = my_hand[0] % 9
+         num2 = my_hand[1] % 9
+         highCard = max(num1, num2)
+         # less than 3 folding condition
+         if(highCard <= 3 and (num1 != num2 and (num1 != 8 and num2 != 8))):
+            if observation["valid_actions"][action_types.FOLD.value]:
+                return action_types.FOLD.value, 0, -1
+         #less than 4 condition
+         if(highCard <= 4 and (num1 != num2 and (num1 != 5 and num2 != 5 and num1!= 8 and num2 != 8))):
+             if observation["valid_actions"][action_types.FOLD.value]:
+                return action_types.FOLD.value, 0, -1
+         if(num1 == 5 or num2 == 5 and (num1 != num2)):
+             if(num1 != 8 and num2 != 8 and num1 != 4 and num2 != 4 and num1 != 6 and num2 != 6 and num1 != 7 and num2 != 7):
+                 if observation["valid_actions"][action_types.FOLD.value]:
+                     return action_types.FOLD.value, 0, -1
+         if(num1 == num2):
+             raise_amount = observation["min_raise"] + random.randint(0, highCard)
+             return action_types.RAISE.value, raise_amount, -1
+         if observation["valid_actions"][action_types.CHECK.value]:
+             return action_types.CHECK.value, 0, -1
+         if observation["valid_actions"][action_types.CALL.value]:
+             return action_types.CALL.value, 0, -1
