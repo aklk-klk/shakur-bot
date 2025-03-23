@@ -7,7 +7,7 @@ action_types = PokerEnv.ActionType
 
 class PlayerAgent(Agent):
     def __name__(self):
-        return "PlayerAgent"
+        return "IT"
 
     def __init__(self, stream: bool = True):
         super().__init__(stream)
