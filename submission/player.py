@@ -54,6 +54,42 @@ class PlayerAgent(Agent):
         def has_made_flush(cards):
             suits = [get_suit(c) for c in cards]
             return any(suits.count(s) >= 5 for s in set(suits))
+        def has_full_house(cards):
+            ranks = [get_rank(c) for c in cards]
+            counts = [ranks.count(r) for r in set(ranks)]
+            return 3 in counts and counts.count(2) + counts.count(3) >= 2
+        def has_straight_flush(cards):
+            diamond_ranks = []
+            heart_ranks = []
+            spade_ranks = []
+            
+            for c in cards:
+                suit = get_suit(c)
+                rank = get_rank(c)
+                if suit == 0:
+                    diamond_ranks.append(rank)
+                elif suit == 1:
+                    heart_ranks.append(rank)
+                elif suit == 2:
+                    spade_ranks.append(rank)
+
+
+            for suited_ranks in [diamond_ranks, heart_ranks, spade_ranks]:
+                if len(suited_ranks) < 5:
+                    continue
+
+                unique_ranks = set(suited_ranks)
+                if 8 in unique_ranks:
+                    unique_ranks.add(1)  # Treat Ace as low for A-2-3-4-5
+                sorted_ranks = sorted(unique_ranks)
+                
+                for i in range(len(sorted_ranks) - 4):
+                    window = sorted_ranks[i:i+5]
+                    if window[4] - window[0] == 4:
+                        return True
+
+            return False
+        #will this push!
         
         if street == 1:
             community_cards = observation["community_cards"]
@@ -150,3 +186,4 @@ class PlayerAgent(Agent):
              return action_types.CHECK.value, 0, -1
          if observation["valid_actions"][action_types.CALL.value]:
              return action_types.CALL.value, 0, -1
+         
