@@ -95,31 +95,42 @@ class PlayerAgent(Agent):
             community_cards = observation["community_cards"]
             all_cards = my_cards + community_cards
 
-            if has_made_flush(all_cards) or has_trips(all_cards) or has_two_pair(all_cards):
+            # STRONGEST HANDS
+            if has_straight_flush(all_cards) or has_full_house(all_cards):
                 if can_raise:
-                    raise_amount = random.randint(0, 9) * get_rank(my_cards[0])+ observation["min_raise"]
-                    return (action_types.RAISE.value, raise_amount, -1)
-
+                    raise_amount = random.randint(3, 10) * (get_rank(my_cards[0]) + 1) + observation["min_raise"]
+                    return (action_types.RAISE.value, min(raise_amount, observation["max_raise"]), -1)
                 elif can_call:
                     return (action_types.CALL.value, 0, -1)
 
+             # MADE FLUSH or TRIPS / TWO PAIR
+            elif has_made_flush(all_cards) or has_trips(all_cards) or has_two_pair(all_cards):
+                if can_raise:
+                    raise_amount = random.randint(2, 5) * (get_rank(my_cards[0]) + 1) + observation["min_raise"]
+                    return (action_types.RAISE.value, min(raise_amount, observation["max_raise"]), -1)
+                elif can_call:
+                    return (action_types.CALL.value, 0, -1)
+            #would be funny to do this
             elif has_flush_draw(all_cards):
                 if can_call:
                     return (action_types.CALL.value, 0, -1)
                 elif can_check:
                     return (action_types.CHECK.value, 0, -1)
 
+             # WEAK HAND — just a pair
             elif is_pair(all_cards):
                 if can_check:
                     return (action_types.CHECK.value, 0, -1)
                 elif can_call:
                     return (action_types.CALL.value, 0, -1)
 
+            # NOTHING — just try to check
             elif can_check:
                 return (action_types.CHECK.value, 0, -1)
-            
-            # Fallback
+
+             # FALLBACK — fold if nothing is available
             return (action_types.FOLD.value, 0, -1)
+
 
     
 
