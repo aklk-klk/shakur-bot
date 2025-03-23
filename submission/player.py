@@ -99,7 +99,9 @@ class PlayerAgent(Agent):
                         return True
 
             return False
-        #will this push!
+        
+        if street == 0:
+            return PlayerAgent.preFlopAction(self, observation)
         
         if street == 1:
             community_cards = observation["community_cards"]
@@ -141,34 +143,72 @@ class PlayerAgent(Agent):
              # FALLBACK — fold if nothing is available
             return (action_types.FOLD.value, 0, -1)
 
+        if street == 2:
+            community_cards = observation["community_cards"]
+            all_cards = my_cards + community_cards
 
-    
+            # STRONGEST HANDS
+            if has_straight_flush(all_cards) or has_full_house(all_cards):
+                if can_raise:
+                    raise_amount = random.randint(3, 10) * (get_rank(my_cards[0]) + 1) + observation["min_raise"]
+                    return (action_types.RAISE.value, min(raise_amount, observation["max_raise"]), -1)
+                elif can_call:
+                    return (action_types.CALL.value, 0, -1)
 
-        # Get indices of valid actions (where value is 1)
-        valid_action_indices = [i for i, is_valid in enumerate(valid_actions) if is_valid]
+             # MADE FLUSH or TRIPS / TWO PAIR
+            elif has_made_flush(all_cards):
+                if can_raise:
+                    raise_amount = random.randint(2, 5) * (get_rank(my_cards[0]) + 1) + observation["min_raise"]
+                    return (action_types.RAISE.value, min(raise_amount, observation["max_raise"]), -1)
+                elif can_call:
+                    return (action_types.CALL.value, 0, -1)
+            #would be funny to do this
+            elif has_flush_draw(all_cards):
+                if can_call:
+                    return (action_types.CALL.value, 0, -1)
+                elif can_check:
+                    return (action_types.CHECK.value, 0, -1)
+
+             # WEAK HAND — just a pair
+            elif is_pair(all_cards)  or has_trips(all_cards) or has_two_pair(all_cards):
+                if can_check:
+                    return (action_types.CHECK.value, 0, -1)
+                elif can_call:
+                    return (action_types.CALL.value, 0, -1)
+            # NOTHING — just try to check
+            if can_check:
+                return (action_types.CHECK.value, 0, -1)
+            if can_call and observation["opp_bet"] < 70:
+                return action_types.CALL.value, 0, -1
+
+             # FALLBACK — fold if nothing is available
+            return (action_types.FOLD.value, 0, -1)
         
-        # Randomly choose one of the valid action indices
-        action_type = random.choice(valid_action_indices)
-        
-        # Set up our response values
-        raise_amount = 0
-        card_to_discard = -1  # -1 means no discard
-        
-        # If we chose to raise, pick a random amount between min and max
-        if action_type == action_types.RAISE.value:
-            if observation["min_raise"] == observation["max_raise"]:
-                raise_amount = observation["min_raise"]
+        if street == 3:
+            community_cards = observation["community_cards"]
+            all_cards = my_cards + community_cards
+
+            # STRONGEST HANDS
+            if has_straight_flush(all_cards) or has_full_house(all_cards):
+                if can_raise:
+                    raise_amount = random.randint(3, 10) * (get_rank(my_cards[0]) + 1) + observation["min_raise"]
+                    return (action_types.RAISE.value, min(raise_amount, observation["max_raise"]), -1)
+                elif can_call:
+                    return (action_types.CALL.value, 0, -1)
+
+             # MADE FLUSH or TRIPS / TWO PAIR
+            elif has_made_flush(all_cards):
+                if can_raise:
+                    raise_amount = random.randint(2, 5) * (get_rank(my_cards[0]) + 1) + observation["min_raise"]
+                    return (action_types.RAISE.value, min(raise_amount, observation["max_raise"]), -1)
+                elif can_call:
+                    return (action_types.CALL.value, 0, -1)
+                
+            if can_check:
+                return (action_types.CHECK.value, 0, -1)
             else:
-                raise_amount = random.randint(
-                    observation["min_raise"],
-                    observation["max_raise"]
-                )
-        # If we chose to discard, randomly pick one of our two cards (0 or 1)
-        if action_type == action_types.DISCARD.value:
-            card_to_discard = random.randint(0, 1)
+                 return (action_types.CALL.value, 0, -1)
         
-        return action_type, raise_amount, card_to_discard
-
 
     def observe(self, observation, reward, terminated, truncated, info):
         # Log interesting events when observing opponent's actions
